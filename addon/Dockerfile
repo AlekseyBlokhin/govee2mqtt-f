@@ -14,7 +14,7 @@ RUN apt-get update \
 WORKDIR /src
 
 # hardcode your repo + branch/tag; no build args, no ../
-RUN git clone --depth 1 --branch main \
+RUN git clone --depth 1 --branch v0.0.10 \
     https://github.com/AlekseyBlokhin/govee2mqtt-f . \
  || (echo "Failed to clone your fork" && exit 1)
 
