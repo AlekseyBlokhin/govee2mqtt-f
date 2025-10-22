@@ -1,35 +1,39 @@
 # syntax=docker/dockerfile:1
 
-# --- Global args (must be before any FROM if used in FROM) ---
+# Home Assistant passes BUILD_FROM; we just need to declare it before any FROM.
 ARG BUILD_FROM
+
+# --- Hardcode your fork + ref here (change these two lines if needed) ---
 ARG REPO_URL="https://github.com/AlekseyBlokhin/govee2mqtt-f"
-ARG REPO_REF="main"   # set a tag/branch/commit via config.yaml -> args
+ARG REPO_REF="main"   # or a tag like v0.0.5, or a commit SHA
 
-# --- Build stage: compile your fork from source ---
-FROM --platform=$BUILDPLATFORM rust:1.74-alpine AS govee2mqtt
+# ---------- Build stage: compile your fork on Debian (glibc) ----------
+FROM --platform=$BUILDPLATFORM rust:1.74-bookworm AS build
 
-RUN apk add --no-cache musl-dev openssl-dev pkgconfig build-base git
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates git pkg-config libssl-dev build-essential \
+ && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /build
-# Clone your repo at the ref provided (Supervisor will pass args)
-# (If clone fails, exit with message so it's obvious)
+WORKDIR /src
+
+# Clone your repo at the ref above (hardcoded here; no build args needed)
 RUN git clone --depth 1 --branch "$REPO_REF" "$REPO_URL" . \
  || (echo "Failed to clone $REPO_URL at $REPO_REF" && exit 1)
 
 # Build release binary
 RUN cargo build --release
 
-# --- Final stage: Home Assistant base image for the add-on ---
+# ---------- Final stage: Home Assistant base image ----------
 FROM $BUILD_FROM
-
 WORKDIR /app
 
-# Copy the compiled binary and runtime assets from the build stage
-COPY --from=govee2mqtt /build/target/release/govee /app/govee
-COPY --from=govee2mqtt /build/AmazonRootCA1.pem /app/
-COPY --from=govee2mqtt /build/assets /app/assets
+# Copy compiled binary and runtime assets
+COPY --from=build /src/target/release/govee /app/govee
+COPY --from=build /src/AmazonRootCA1.pem /app/
+COPY --from=build /src/assets /app/assets
 
-# Entrypoint from the add-on context
+# Entrypoint script (this file is in addon/ so it is in the build context)
 COPY run.sh /run.sh
 
-CMD [ "/run.sh" ]
+CMD ["/run.sh"]
