@@ -464,9 +464,18 @@ async fn lan_disco(
             }
         }
 
-        if let Response::Scan(info) = response.msg {
-            tx.send(info).await?;
+        if let Response::Scan(mut info) = response.msg {
+            if matches!(info.ip, IpAddr::V4(ip) if ip.octets() == [0, 0, 0, 0]) {
+                log::warn!(
+                    "Device {} (SKU {}) missing IP in scan response — using sender IP: {}",
+                    info.device, info.sku, addr.ip()
+                );
+                info.ip = addr.ip();
+            }
         }
+
+    tx.send(info).await?;
+}
 
         Ok(())
     }
