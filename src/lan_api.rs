@@ -472,10 +472,9 @@ async fn lan_disco(
                 );
                 info.ip = addr.ip();
             }
+            
+            tx.send(info).await?;
         }
-
-    tx.send(info).await?;
-}
 
         Ok(())
     }
