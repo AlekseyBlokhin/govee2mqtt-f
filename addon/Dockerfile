@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1
 
-# HA Supervisor injects BUILD_FROM; declare it before any FROM that uses it
+# Supervisor injects this; declare before any FROM that uses it
 ARG BUILD_FROM
 
 # ---------- build stage: compile your fork on Debian (glibc) ----------
-FROM --platform=$BUILDPLATFORM rust:1.74-bookworm AS build
+FROM --platform=$BUILDPLATFORM rust:1.82-bookworm AS build
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -13,24 +13,24 @@ RUN apt-get update \
 
 WORKDIR /src
 
-# Hardcode your repo + branch/tag here. No ARGs needed.
+# hardcode your repo + branch/tag; no build args, no ../
 RUN git clone --depth 1 --branch main \
     https://github.com/AlekseyBlokhin/govee2mqtt-f . \
  || (echo "Failed to clone your fork" && exit 1)
 
-# Build the release binary
+# build the release binary (Cargo.lock v4 is supported in this toolchain)
 RUN cargo build --release
 
 # ---------- final stage: Home Assistant base image ----------
 FROM $BUILD_FROM
 WORKDIR /app
 
-# Copy compiled binary + runtime assets from build stage
+# copy compiled binary + runtime assets
 COPY --from=build /src/target/release/govee /app/govee
 COPY --from=build /src/AmazonRootCA1.pem /app/
 COPY --from=build /src/assets /app/assets
 
-# Entrypoint from the add-on context (present in addon/ folder)
+# entrypoint from the add-on context (present in addon/)
 COPY run.sh /run.sh
 
 CMD ["/run.sh"]
