@@ -1,6 +1,6 @@
 name: Govee to MQTT Bridge
 # image: ghcr.io/wez/govee2mqtt-{arch}
-version: "v0.0.4"
+version: "v0.0.5"
 slug: govee2mqtt
 description: Control Govee Devices
 url: https://github.com/AlekseyBlokhin/govee2mqtt-f
@@ -21,6 +21,10 @@ webui: http://[HOST]:[PORT:8056]/assets/index.html
 
 # Host network access is required for LAN discovery
 host_network: true
+
+args:
+  REPO_URL: https://github.com/AlekseyBlokhin/govee2mqtt-f
+  REPO_REF: main
 
 map:
   - type: addon_config
