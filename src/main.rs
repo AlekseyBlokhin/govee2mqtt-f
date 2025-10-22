@@ -118,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     setup_logger();
-
+    log::info!("🧪 Running custom fork with fallback IP support");
     let args = Args::parse();
     args.run().await
 }
