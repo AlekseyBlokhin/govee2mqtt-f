@@ -457,25 +457,25 @@ async fn lan_disco(
             .with_context(|| format!("Parsing: {}", String::from_utf8_lossy(data)))?;
 
         // If this is a scan response and `ip` is missing, inject the sender IP
-        if raw.get("msg").and_then(|m| m.get("cmd")).and_then(|c| c.as_str()) == Some("scan") {
-            let has_ip = raw
-                .get("msg")
-                .and_then(|m| m.get("data"))
-                .and_then(|d| d.get("ip"))
-                .is_some();
+        // if raw.get("msg").and_then(|m| m.get("cmd")).and_then(|c| c.as_str()) == Some("scan") {
+        //     let has_ip = raw
+        //         .get("msg")
+        //         .and_then(|m| m.get("data"))
+        //         .and_then(|d| d.get("ip"))
+        //         .is_some();
         
-            if !has_ip {
-                let ip_str = addr.ip().to_string();
-                if let Some(d) = raw.get_mut("msg").and_then(|m| m.get_mut("data")) {
-                    d.as_object_mut().unwrap().insert("ip".into(), serde_json::Value::String(ip_str.clone()));
-                    log::warn!(
-                        "HACK: scan payload missing `ip`; injecting sender {} for device {:?}",
-                        ip_str,
-                        d.get("device").and_then(|x| x.as_str()).unwrap_or("?")
-                    );
-                }
-            }
-        }
+        //     if !has_ip {
+        //         let ip_str = addr.ip().to_string();
+        //         if let Some(d) = raw.get_mut("msg").and_then(|m| m.get_mut("data")) {
+        //             d.as_object_mut().unwrap().insert("ip".into(), serde_json::Value::String(ip_str.clone()));
+        //             log::warn!(
+        //                 "HACK: scan payload missing `ip`; injecting sender {} for device {:?}",
+        //                 ip_str,
+        //                 d.get("device").and_then(|x| x.as_str()).unwrap_or("?")
+        //             );
+        //         }
+        //     }
+        // }
         
         // Now deserialize the patched JSON into your typed wrapper
         let response: ResponseWrapper = serde_json::from_value(raw)
